@@ -1,6 +1,5 @@
 #Pushpita Rahman
-#CS 171- 063
-#HW 5
+#Computer Programming I
 #12/8/17
 
 """

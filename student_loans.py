@@ -1,6 +1,5 @@
 ##Pushpita Rahman
-#CS 171- 063
-#HW 1
+#Computer Programming I
 #10/13/17
 
 #this is a program that lets the user know loan information

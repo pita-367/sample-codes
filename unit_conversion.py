@@ -1,6 +1,5 @@
 #Pushpita Rahman
-#CS 171
-#HW 2
+#Computer Programming I
 #Oct 27, 2017
 
 #code converted lengths 

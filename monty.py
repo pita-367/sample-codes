@@ -1,5 +1,5 @@
 #Pushpita Rahman
-#CS 171-063
+#Computer Programming I
 
 """
 This code below simulates a monty python scenario where it displays to the player their chances of winning if they stay with the door they chose or if they win when they switch.

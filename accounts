@@ -3,8 +3,8 @@
 #accounts -- maintain a database containing client bank information (such as account number, client name, and client transaction history). Allows users to query (ask information on a client, see a history of transactions, and add an entry -- either a new client or an existing client) 
 #
 #Pushpita Rahman
-#CS 265 006
-#Assignment 3
+#Advanced Programming Techniques
+#
 
 # Python 3.6
 # on Linux 4.4.0-134-generic #160-Ubuntu

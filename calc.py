@@ -4,8 +4,8 @@
 # Assumptions: all inputs are valid inputs (does error checking for Division by 0)
 #
 # Pushpita Rahman
-# CS 265 006
-# Assignment 2
+# Advanced Programming Techniques
+#
 #
 # Python 3.6
 # on Linux 4.4.0-134-generic #160-Ubuntu
