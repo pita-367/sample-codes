@@ -1,0 +1,249 @@
+#!/usr/bin/python3 
+#
+#accounts -- maintain a database containing client bank information (such as account number, client name, and client transaction history). Allows users to query (ask information on a client, see a history of transactions, and add an entry -- either a new client or an existing client) 
+#
+#Pushpita Rahman
+#CS 265 006
+#Assignment 3
+
+# Python 3.6
+# on Linux 4.4.0-134-generic #160-Ubuntu
+# 
+# EDITOR: tabstop=2, cols=80
+
+
+import sys
+import datetime
+import os
+now = datetime.datetime.now()
+
+#checks if enviromental variable $ACCT_LIST is set
+try:
+	os.getenv('ACCT_LIST')
+except KeyError:
+	print('Need to set ACCT_LIST')
+	sys.exit(0)
+
+def filelog():
+	logfile = os.getenv('ACCT_LIST')
+	fileinfo = open(logfile)
+	acct_name_dict = {}		#dict with key as account number and values as holder's name
+	acct_balance_dict = {}	#dict with key as account number and values as balance
+	acct_hist = []				#list containing account history (formatted in a list [account number, account history]
+	
+	#for each line in the file, split it up with the colon delimineter and store into variables accordingly
+	#acctnum -- account number
+	#name -- account holder's name
+	#date -- date of transaction
+	#transtype -- type of transaction (withdraw/deposit)
+	#amt -- amount of money (dollars) in transaction
+	for line in fileinfo: 
+		line= line.strip() 	
+		[acctnum, name, date, transtype, amt] = line.split(':')
+		acct_name_dict[acctnum] = name	
+		
+		#updates balance dictionary; first checks if a key exists, if not, add to dict and intital balance = 0, else use balance_calc to calculate balance accordingly 
+		#curr_balance -- current balance of account
+		if acctnum in acct_balance_dict:
+			curr_balance = acct_balance_dict[acctnum]
+			new_balance = balance_calc(curr_balance, transtype, amt)
+			acct_balance_dict[acctnum] = new_balance
+		else:
+			new_balance = balance_calc(0, transtype, amt)
+			acct_balance_dict[acctnum] = new_balance
+		
+		#used to format transaction history [date transtype $amt]
+		if transtype == "D":
+			transtype = "deposit"
+		else:
+			transtype = "withdrawn"
+		hist = date + " " +  transtype + " $" + amt
+		acct_hist.append([acctnum, hist])
+		
+	return (acct_name_dict,acct_balance_dict,acct_hist) #returns main three dict/lists used in other fucntions
+
+#
+#
+#
+
+#function menu -- displays the menu with options for a user to select 
+#takes input acct_name_dict and opts (which is initally set to empty; opts is used only for transaction to include a "New Account Creation Option"; returns the option (either as "New" or the key value)
+def menu(acct_name_dict,opt=""):
+	option = {}
+	key_options = []
+	i = 1
+	
+	#sort the account (keys) by name 
+	for key in acct_name_dict:
+		key_options.append((acct_name_dict[key] + " " + key))
+	key_options.sort() 
+
+	#print the account numbers available to select from
+	for client in key_options: 
+		print(i,')', client)
+		[fname, lname, acctnum] = client.split(" ")
+		option[i] = acctnum
+		i+=1
+
+	#if transaction add option to create new account
+	if opt == '-t':
+		print(i,') Create New Account')
+	
+	print('q ) uit\n') 
+	user_input = input("Enter choice => ")
+	print('\n')
+	#if user wants to quit, close out
+	if user_input =='q':
+		print('Goodbye.\n')
+		sys.exit(0)
+	#if user selects last i value in transactions it means they want to create a new account
+	elif opt == "-t" and int(user_input) == i:
+		return('New')
+	#else try to convert to int value; if not it is an invalid input
+	else:
+		try:
+			user_input = int(user_input)
+		except Exception as e:
+			print('Invalid Input.')
+			option = menu(acct_name_dict)
+		
+	return option[user_input]
+
+
+#
+#
+#
+
+#function balance_calc -- used to calculate current balance with inputs of current balance, transaction type, and amount, and outputs new balance
+#if deposite add, else subtract (withdraw); used float because money is represented with 0.00 
+def balance_calc(curr_balance, transtype, amt):
+	amt = float(amt)
+	curr_balance = float(curr_balance)
+	if transtype == "D":
+		new_balance = curr_balance + amt
+	else:
+		new_balance = curr_balance - amt
+	return new_balance
+
+#
+#
+#
+
+#function transactions -- inputs transactions into the database
+#trans_amt -- user_input value of transaction amount
+#currdate -- current date
+def transactions(acctnum, acctname):
+	print('\nAre you\nw)ithdrawing\nd)epositing\n')
+	transtype = input('Enter choice => ')
+
+	#if input is not 'w' or 'd'; it's invalid
+	if transtype != 'w' and transtype != 'd':
+		print('Invalid Input.')
+		transactions(acctnum, acctname)
+	transtype = transtype.capitalize() #valid input; capitalize for format
+
+	#input amount; checks to see if it's a number; else it's invalid
+	trans_amt = input('\nPlease enter amount (no dollar sign) => ')
+	try:
+		trans_amt = float(trans_amt)
+	except Exception as e:
+		print('Invalid Amount.')
+		transactions(acctnum, acctname)
+
+	currdate = now.strftime("%m.%y.%d") #formats date (m-02.y-02.d-02)
+	trans_formatted = ('%s:%s:%s:%s:%.2f\n' % (acctnum, acctname, currdate, transtype, trans_amt)) #format to enter
+
+	logfile = os.getenv('ACCT_LIST')
+	fileinfo = open(logfile,'a')
+	fileinfo.write(trans_formatted)
+	
+	print('\nTransaction Complete!\n')
+
+#
+#
+#
+
+#function check -- checks to see if account number is valid
+def check_key(nacct_num,acct_name_dict):
+	keys = acct_name_dict.keys()
+	values = acct_name_dict.values()
+	for key in keys:
+		if int(key) == nacct_num:
+			print("Account already exists\nAccount Holder's name: ", acct_name_dict[key])
+			insert(acct_name_dict)
+	return(1)
+
+#
+#
+#
+
+#function insert -- used for transactions
+def insert(acct_name_dict):
+	option = ""
+	while option != 'q':
+		[acct_name_dict,acct_balance_dict,acct_hist] = filelog()	#basically refreshes options added
+		option = menu(acct_name_dict,'-t')
+		print('good here')
+		if option == 'New':
+			nacct_name = input('\nEnter a name for the account holder => ')
+			nacct_num = input('\nEnter account number => ')
+			#checks acct number is 4 numbers long
+			if len(nacct_num) == 4:
+				try:
+					nacct_num = int(nacct_num)
+					check_key(nacct_num,acct_name_dict)
+					transactions(nacct_num, nacct_name)	#if it is a valid input insert into database
+				except Exception as e:
+					print('Invalid Input.')
+					insert(acct_name_dict)
+			else:
+				print('Account# is not a string of 4 numbers')
+				insert(acct_name_dict)
+
+		else:	#to add onto existing accounts
+			print(acct_name_dict[option])
+			transactions(option , acct_name_dict[option])
+#
+#
+#
+
+#main function
+def main():
+	query = sys.argv[1]
+	[acct_name_dict,acct_balance_dict,acct_hist] = filelog() #import data from file
+	option = ""
+	try:
+
+		if query == '-i':      #display account info
+			while option != 'q':
+				print('\nInfo\n----\n')
+				option = menu(acct_name_dict)
+				print('\n\taccount #: ', option)
+				print('    \tname: ', acct_name_dict[option])
+				print(' \tbalance: $', acct_balance_dict[option])
+				print('\n')
+
+		elif query == '-h':    #display history 
+			while option != 'q':
+				print('\nHistory\n-------\n')
+				option = menu(acct_name_dict)
+				acctnum = option
+				#iterate through list; if current iteration matches the selected account number, then output the history (second value in list)
+				for i in range(len(acct_hist)):
+					if acct_hist[i][0] == acctnum:
+						print('\t',acct_hist[i][1])
+				print('\n')
+
+		elif query == '-t':    #insert transaction
+			print('hello')
+			insert(acct_name_dict) #separate function allows for reiteration if there is a valid input
+
+	#error catching function; prints error		
+	except Exception as e:
+		print(e)
+		sys.exit(0)
+
+
+if __name__ == '__main__':
+	main()
+
